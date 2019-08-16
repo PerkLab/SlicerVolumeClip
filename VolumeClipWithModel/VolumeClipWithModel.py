@@ -101,38 +101,38 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     #
     # clip outside the surface
     #
-    self.ClipOutsideSurfaceCheckBox = qt.QCheckBox()
-    self.ClipOutsideSurfaceCheckBox.checked = False
-    self.ClipOutsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled outside the clipping surface.")
-    parametersFormLayout.addRow("Clip outside: ", self.ClipOutsideSurfaceCheckBox)
+    self.clipOutsideSurfaceCheckBox = qt.QCheckBox()
+    self.clipOutsideSurfaceCheckBox.checked = False
+    self.clipOutsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled outside the clipping surface.")
+    parametersFormLayout.addRow("Clip outside: ", self.clipOutsideSurfaceCheckBox)
 
     #
     # outside fill value
     #
-    self.FillOutsideValueEdit = qt.QSpinBox()
-    self.FillOutsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill outside the clipped regions")
-    self.FillOutsideValueEdit.minimum = 0
-    self.FillOutsideValueEdit.maximum = 65535
-    self.FillOutsideValueEdit.value = 255
-    parametersFormLayout.addRow("Outside Fill value: ", self.FillOutsideValueEdit)
+    self.fillOutsideValueEdit = qt.QSpinBox()
+    self.fillOutsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill outside the clipped regions")
+    self.fillOutsideValueEdit.minimum = 0
+    self.fillOutsideValueEdit.maximum = 65535
+    self.fillOutsideValueEdit.value = 255
+    parametersFormLayout.addRow("Outside Fill value: ", self.fillOutsideValueEdit)
 
     #
     # clip inside the surface
     #
-    self.ClipInsideSurfaceCheckBox = qt.QCheckBox()
-    self.ClipInsideSurfaceCheckBox.checked = False
-    self.ClipInsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled inside the clipping surface.")
-    parametersFormLayout.addRow("Clip inside: ", self.ClipInsideSurfaceCheckBox)
+    self.clipInsideSurfaceCheckBox = qt.QCheckBox()
+    self.clipInsideSurfaceCheckBox.checked = False
+    self.clipInsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled inside the clipping surface.")
+    parametersFormLayout.addRow("Clip inside: ", self.clipInsideSurfaceCheckBox)
 
     #
     # outside fill value
     #
-    self.FillInsideValueEdit = qt.QSpinBox()
-    self.FillInsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill Inside the clipped regions")
-    self.FillInsideValueEdit.minimum = 0
-    self.FillInsideValueEdit.maximum = 65535
-    self.FillInsideValueEdit.value = 255
-    parametersFormLayout.addRow("Inside Fill value: ", self.FillInsideValueEdit)
+    self.fillInsideValueEdit = qt.QSpinBox()
+    self.fillInsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill Inside the clipped regions")
+    self.fillInsideValueEdit.minimum = 0
+    self.fillInsideValueEdit.maximum = 65535
+    self.fillInsideValueEdit.value = 255
+    parametersFormLayout.addRow("Inside Fill value: ", self.fillInsideValueEdit)
 
     #
     # output volume selector
@@ -164,7 +164,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     self.outputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onOutputVolumeSelect)
 
     # Define list of widgets for updateGUIFromParameterNode, updateParameterNodeFromGUI, and addGUIObservers
-    self.valueEditWidgets = {"ClipOutsideSurface": self.ClipOutsideSurfaceCheckBox, "FillOutsideValue": self.FillOutsideValueEdit, "ClipInsideSurface": self.ClipInsideSurfaceCheckBox, "FillInsideValue": self.FillInsideValueEdit}
+    self.valueEditWidgets = {"clipOutsideSurface": self.clipOutsideSurfaceCheckBox, "fillOutsideValue": self.fillOutsideValueEdit, "clipInsideSurface": self.clipInsideSurfaceCheckBox, "fillInsideValue": self.fillInsideValueEdit}
     self.nodeSelectorWidgets = {"InputVolume": self.inputVolumeSelector, "ClippingModel": self.clippingModelSelector, "ClippingMarkup": self.clippingMarkupSelector, "OutputVolume": self.outputVolumeSelector}
 
     # Use singleton parameter node (it is created if does not exist yet)
@@ -319,11 +319,11 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     inputVolume = self.inputVolumeSelector.currentNode()
     outputVolume = self.outputVolumeSelector.currentNode()
     clippingModel = self.clippingModelSelector.currentNode()
-    ClipOutsideSurface = self.ClipOutsideSurfaceCheckBox.checked
-    ClipInsideSurface = self.ClipInsideSurfaceCheckBox.checked
-    FillOutsideValue = self.FillOutsideValueEdit.value
-    FillInsideValue = self.FillInsideValueEdit.value
-    self.logic.clipVolumeWithModel(inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, ClipInsideSurface, FillInsideValue, outputVolume)
+    clipOutsideSurface = self.clipOutsideSurfaceCheckBox.checked
+    clipInsideSurface = self.clipInsideSurfaceCheckBox.checked
+    fillOutsideValue = self.fillOutsideValueEdit.value
+    fillInsideValue = self.fillInsideValueEdit.value
+    self.logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillOutsideValue, clipInsideSurface, fillInsideValue, outputVolume)
     self.logic.showInSliceViewers(outputVolume, ["Red", "Yellow", "Green"])
 
 #
@@ -342,13 +342,13 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     # Set default parameters
     node = ScriptedLoadableModuleLogic.createParameterNode(self)
     node.SetName(slicer.mrmlScene.GetUniqueNameByString(self.moduleName))
-    node.SetParameter("ClipOutsideSurface", "1")
-    node.SetParameter("FillOutsideValue", "0")
-    node.SetParameter("ClipInsideSurface", "1")
-    node.SetParameter("FillInsideValue", "255")
+    node.SetParameter("clipOutsideSurface", "1")
+    node.SetParameter("fillOutsideValue", "0")
+    node.SetParameter("clipInsideSurface", "1")
+    node.SetParameter("fillInsideValue", "255")
     return node
 
-  def clipVolumeWithModel(self, inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, ClipInsideSurface, FillInsideValue, outputVolume):
+  def clipVolumeWithModel(self, inputVolume, clippingModel, clipOutsideSurface, fillOutsideValue, clipInsideSurface, fillInsideValue, outputVolume):
     """
     Fill voxels of the input volume inside/outside the clipping model with the provided fill value
     """
@@ -397,18 +397,18 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     outputVolume.SetIJKToRASMatrix(ijkToRas)
 
     # Update volume with the stencil operation result depending on user choices
-    if ClipOutsideSurface:
+    if clipOutsideSurface:
       stencilToImage.ReverseStencilOff()
-      stencilToImage.SetBackgroundValue(FillOutsideValue)
+      stencilToImage.SetBackgroundValue(fillOutsideValue)
       stencilToImage.Update()
       outputImageData.DeepCopy(stencilToImage.GetOutput())
       outputVolume.SetAndObserveImageData(outputImageData);
       outputVolume.SetIJKToRASMatrix(ijkToRas)
 
-    if ClipInsideSurface:
+    if clipInsideSurface:
       stencilToImage.SetInputConnection(outputVolume.GetImageDataConnection())
       stencilToImage.ReverseStencilOn()
-      stencilToImage.SetBackgroundValue(FillInsideValue)
+      stencilToImage.SetBackgroundValue(fillInsideValue)
       stencilToImage.Update()
       outputImageData.DeepCopy(stencilToImage.GetOutput())
       outputVolume.SetAndObserveImageData(outputImageData);
@@ -584,13 +584,13 @@ class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
 
     # Clip volume
     logic = VolumeClipWithModelLogic()
-    ClipOutsideSurface = True
-    FillOutsideValue = 0
-    ClipInsideSurface = True
-    FillInsideValue = 255
+    clipOutsideSurface = True
+    fillOutsideValue = 0
+    clipInsideSurface = True
+    fillInsideValue = 255
 
     logic.updateModelFromMarkup(inputMarkup, clippingModel)
-    logic.clipVolumeWithModel(inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, outputVolume)
+    logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillOutsideValue, outputVolume)
     logic.showInSliceViewers(outputVolume, ["Red", "Yellow", "Green"])
 
     self.delayDisplay("Test passed!")
