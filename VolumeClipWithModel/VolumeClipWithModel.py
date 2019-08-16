@@ -41,7 +41,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
 
   def setup(self):
     ScriptedLoadableModuleWidget.setup(self)
-    
+
     # Instantiate and connect widgets ...
 
     #
@@ -99,21 +99,40 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     parametersFormLayout.addRow("Clipping surface from markups: ", self.clippingMarkupSelector)
 
     #
-    # clip inside/outside the surface
+    # clip outside the surface
     #
-    self.clipOutsideSurfaceCheckBox = qt.QCheckBox()
-    self.clipOutsideSurfaceCheckBox.checked = False
-    self.clipOutsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled outside the clipping surface.")
-    parametersFormLayout.addRow("Clip outside: ", self.clipOutsideSurfaceCheckBox)    
-    
+    self.ClipOutsideSurfaceCheckBox = qt.QCheckBox()
+    self.ClipOutsideSurfaceCheckBox.checked = False
+    self.ClipOutsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled outside the clipping surface.")
+    parametersFormLayout.addRow("Clip outside: ", self.ClipOutsideSurfaceCheckBox)
+
     #
     # outside fill value
     #
-    self.fillValueEdit = qt.QSpinBox()
-    self.fillValueEdit.setToolTip("Choose the voxel intensity that will be used to fill the clipped regions")
-    self.fillValueEdit.minimum = -32768
-    self.fillValueEdit.maximum = 65535
-    parametersFormLayout.addRow("Fill value: ", self.fillValueEdit)
+    self.FillOutsideValueEdit = qt.QSpinBox()
+    self.FillOutsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill outside the clipped regions")
+    self.FillOutsideValueEdit.minimum = 0
+    self.FillOutsideValueEdit.maximum = 65535
+    self.FillOutsideValueEdit.value = 255
+    parametersFormLayout.addRow("Outside Fill value: ", self.FillOutsideValueEdit)
+
+    #
+    # clip inside the surface
+    #
+    self.ClipInsideSurfaceCheckBox = qt.QCheckBox()
+    self.ClipInsideSurfaceCheckBox.checked = False
+    self.ClipInsideSurfaceCheckBox.setToolTip("If checked, voxel values will be filled inside the clipping surface.")
+    parametersFormLayout.addRow("Clip inside: ", self.ClipInsideSurfaceCheckBox)
+
+    #
+    # outside fill value
+    #
+    self.FillInsideValueEdit = qt.QSpinBox()
+    self.FillInsideValueEdit.setToolTip("Choose the voxel intensity that will be used to fill Inside the clipped regions")
+    self.FillInsideValueEdit.minimum = 0
+    self.FillInsideValueEdit.maximum = 65535
+    self.FillInsideValueEdit.value = 255
+    parametersFormLayout.addRow("Inside Fill value: ", self.FillInsideValueEdit)
 
     #
     # output volume selector
@@ -143,9 +162,9 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     self.clippingModelSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onClippingModelSelect)
     self.clippingMarkupSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onClippingMarkupSelect)
     self.outputVolumeSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onOutputVolumeSelect)
-    
+
     # Define list of widgets for updateGUIFromParameterNode, updateParameterNodeFromGUI, and addGUIObservers
-    self.valueEditWidgets = {"ClipOutsideSurface": self.clipOutsideSurfaceCheckBox, "FillValue": self.fillValueEdit}
+    self.valueEditWidgets = {"ClipOutsideSurface": self.ClipOutsideSurfaceCheckBox, "FillOutsideValue": self.FillOutsideValueEdit, "ClipInsideSurface": self.ClipInsideSurfaceCheckBox, "FillInsideValue": self.FillInsideValueEdit}
     self.nodeSelectorWidgets = {"InputVolume": self.inputVolumeSelector, "ClippingModel": self.clippingModelSelector, "ClippingMarkup": self.clippingMarkupSelector, "OutputVolume": self.outputVolumeSelector}
 
     # Use singleton parameter node (it is created if does not exist yet)
@@ -154,12 +173,12 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     self.setAndObserveParameterNode(parameterNode)
 
     self.setAndObserveClippingMarkupNode(self.clippingMarkupSelector.currentNode())
-    
+
     self.addGUIObservers()
-    
+
     # Add vertical spacer
     self.layout.addStretch(1)
-    
+
     self.updateApplyButtonState()
 
   def cleanup(self):
@@ -197,13 +216,13 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
       self.clippingMarkupNodeObserver = self.clippingMarkupNode.AddObserver(vtk.vtkCommand.ModifiedEvent, self.onClippingMarkupNodeModified)
     # Update GUI
     self.updateModelFromClippingMarkupNode()
-    
+
   def getParameterNode(self):
     return self.parameterNode
 
   def onClippingMarkupNodeModified(self, observer, eventid):
     self.updateModelFromClippingMarkupNode()
-    
+
   def onParameterNodeModified(self, observer, eventid):
     self.updateGUIFromParameterNode()
 
@@ -218,7 +237,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
       return
     for parameterName in self.valueEditWidgets:
       oldBlockSignalsState = self.valueEditWidgets[parameterName].blockSignals(True)
-      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()      
+      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()
       if widgetClassName=="QCheckBox":
         checked = (int(parameterNode.GetParameter(parameterName)) != 0)
         self.valueEditWidgets[parameterName].setChecked(checked)
@@ -236,7 +255,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     parameterNode = self.getParameterNode()
     oldModifiedState = parameterNode.StartModify()
     for parameterName in self.valueEditWidgets:
-      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()      
+      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()
       if widgetClassName=="QCheckBox":
         if self.valueEditWidgets[parameterName].checked:
           parameterNode.SetParameter(parameterName, "1")
@@ -252,7 +271,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
 
   def addGUIObservers(self):
     for parameterName in self.valueEditWidgets:
-      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()      
+      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()
       if widgetClassName=="QSpinBox":
         self.valueEditWidgets[parameterName].connect("valueChanged(int)", self.updateParameterNodeFromGUI)
       elif widgetClassName=="QCheckBox":
@@ -262,14 +281,14 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
 
   def removeGUIObservers(self):
     for parameterName in self.valueEditWidgets:
-      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()      
+      widgetClassName = self.valueEditWidgets[parameterName].metaObject().className()
       if widgetClassName=="QSpinBox":
         self.valueEditWidgets[parameterName].disconnect("valueChanged(int)", self.updateParameterNodeFromGUI)
       elif widgetClassName=="QCheckBox":
         self.valueEditWidgets[parameterName].disconnect("clicked()", self.updateParameterNodeFromGUI)
     for parameterName in self.nodeSelectorWidgets:
       self.nodeSelectorWidgets[parameterName].disconnect("currentNodeIDChanged(QString)", self.updateParameterNodeFromGUI)
-      
+
   def updateApplyButtonState(self):
     if not self.inputVolumeSelector.currentNode():
       self.applyButton.toolTip = "Input volume is required. Clip volume with surface model is disabled."
@@ -283,7 +302,7 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     else:
       self.applyButton.toolTip = "Clip volume with surface model."
       self.applyButton.enabled = True
-      
+
   def onInputVolumeSelect(self, node):
     self.updateApplyButtonState()
 
@@ -294,15 +313,17 @@ class VolumeClipWithModelWidget(ScriptedLoadableModuleWidget):
     self.setAndObserveClippingMarkupNode(self.clippingMarkupSelector.currentNode())
 
   def onOutputVolumeSelect(self, node):
-    self.updateApplyButtonState()    
-    
+    self.updateApplyButtonState()
+
   def onApplyButton(self):
     inputVolume = self.inputVolumeSelector.currentNode()
     outputVolume = self.outputVolumeSelector.currentNode()
     clippingModel = self.clippingModelSelector.currentNode()
-    clipOutsideSurface = self.clipOutsideSurfaceCheckBox.checked
-    fillValue = self.fillValueEdit.value
-    self.logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillValue, outputVolume)
+    ClipOutsideSurface = self.ClipOutsideSurfaceCheckBox.checked
+    ClipInsideSurface = self.ClipInsideSurfaceCheckBox.checked
+    FillOutsideValue = self.FillOutsideValueEdit.value
+    FillInsideValue = self.FillInsideValueEdit.value
+    self.logic.clipVolumeWithModel(inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, ClipInsideSurface, FillInsideValue, outputVolume)
     self.logic.showInSliceViewers(outputVolume, ["Red", "Yellow", "Green"])
 
 #
@@ -322,24 +343,26 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     node = ScriptedLoadableModuleLogic.createParameterNode(self)
     node.SetName(slicer.mrmlScene.GetUniqueNameByString(self.moduleName))
     node.SetParameter("ClipOutsideSurface", "1")
-    node.SetParameter("FillValue", "0")
+    node.SetParameter("FillOutsideValue", "0")
+    node.SetParameter("ClipInsideSurface", "1")
+    node.SetParameter("FillInsideValue", "255")
     return node
 
-  def clipVolumeWithModel(self, inputVolume, clippingModel, clipOutsideSurface, fillValue, outputVolume):
+  def clipVolumeWithModel(self, inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, ClipInsideSurface, FillInsideValue, outputVolume):
     """
     Fill voxels of the input volume inside/outside the clipping model with the provided fill value
     """
-    
+
     # Determine the transform between the box and the image IJK coordinate systems
-    
-    rasToModel = vtk.vtkMatrix4x4()    
+
+    rasToModel = vtk.vtkMatrix4x4()
     if clippingModel.GetTransformNodeID() != None:
       modelTransformNode = slicer.mrmlScene.GetNodeByID(clippingModel.GetTransformNodeID())
       boxToRas = vtk.vtkMatrix4x4()
       modelTransformNode.GetMatrixTransformToWorld(boxToRas)
       rasToModel.DeepCopy(boxToRas)
       rasToModel.Invert()
-      
+
     ijkToRas = vtk.vtkMatrix4x4()
     inputVolume.GetIJKToRASMatrix( ijkToRas )
 
@@ -348,37 +371,48 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     modelToIjkTransform = vtk.vtkTransform()
     modelToIjkTransform.SetMatrix(ijkToModel)
     modelToIjkTransform.Inverse()
-    
+
     transformModelToIjk=vtk.vtkTransformPolyDataFilter()
     transformModelToIjk.SetTransform(modelToIjkTransform)
     transformModelToIjk.SetInputConnection(clippingModel.GetPolyDataConnection())
 
     # Use the stencil to fill the volume
-    
+
     # Convert model to stencil
     polyToStencil = vtk.vtkPolyDataToImageStencil()
     polyToStencil.SetInputConnection(transformModelToIjk.GetOutputPort())
     polyToStencil.SetOutputSpacing(inputVolume.GetImageData().GetSpacing())
     polyToStencil.SetOutputOrigin(inputVolume.GetImageData().GetOrigin())
     polyToStencil.SetOutputWholeExtent(inputVolume.GetImageData().GetExtent())
-    
+
     # Apply the stencil to the volume
     stencilToImage=vtk.vtkImageStencil()
     stencilToImage.SetInputConnection(inputVolume.GetImageDataConnection())
     stencilToImage.SetStencilConnection(polyToStencil.GetOutputPort())
-    if clipOutsideSurface:
-      stencilToImage.ReverseStencilOff()
-    else:
-      stencilToImage.ReverseStencilOn()
-    stencilToImage.SetBackgroundValue(fillValue)
-    stencilToImage.Update()
 
-    # Update the volume with the stencil operation result
+    # Create a copy of the input volume to work on
     outputImageData = vtk.vtkImageData()
-    outputImageData.DeepCopy(stencilToImage.GetOutput())
-    
+    outputImageData.DeepCopy(inputVolume.GetImageData())
     outputVolume.SetAndObserveImageData(outputImageData);
     outputVolume.SetIJKToRASMatrix(ijkToRas)
+
+    # Update volume with the stencil operation result depending on user choices
+    if ClipOutsideSurface:
+      stencilToImage.ReverseStencilOff()
+      stencilToImage.SetBackgroundValue(FillOutsideValue)
+      stencilToImage.Update()
+      outputImageData.DeepCopy(stencilToImage.GetOutput())
+      outputVolume.SetAndObserveImageData(outputImageData);
+      outputVolume.SetIJKToRASMatrix(ijkToRas)
+
+    if ClipInsideSurface:
+      stencilToImage.SetInputConnection(outputVolume.GetImageDataConnection())
+      stencilToImage.ReverseStencilOn()
+      stencilToImage.SetBackgroundValue(FillInsideValue)
+      stencilToImage.Update()
+      outputImageData.DeepCopy(stencilToImage.GetOutput())
+      outputVolume.SetAndObserveImageData(outputImageData);
+      outputVolume.SetIJKToRASMatrix(ijkToRas)
 
     # Add a default display node to output volume node if it does not exist yet
     if not outputVolume.GetDisplayNode:
@@ -393,18 +427,18 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     """
     Update model to enclose all points in the input markup list
     """
-    
+
     # Delaunay triangulation is robust and creates nice smooth surfaces from a small number of points,
     # however it can only generate convex surfaces robustly.
     useDelaunay = True
-    
+
     # Create polydata point set from markup points
-    
+
     points = vtk.vtkPoints()
     cellArray = vtk.vtkCellArray()
-    
+
     numberOfPoints = inputMarkup.GetNumberOfFiducials()
-    
+
     # Surface generation algorithms behave unpredictably when there are not enough points
     # return if there are very few points
     if useDelaunay:
@@ -429,11 +463,11 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
     pointPolyData.SetLines(cellArray)
     pointPolyData.SetPoints(points)
 
-    
+
     # Create surface from point set
 
     if useDelaunay:
-          
+
       delaunay = vtk.vtkDelaunay3D()
       delaunay.SetInputData(pointPolyData)
 
@@ -446,9 +480,9 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
       smoother.Update()
 
       outputModel.SetPolyDataConnection(smoother.GetOutputPort())
-      
+
     else:
-      
+
       surf = vtk.vtkSurfaceReconstructionFilter()
       surf.SetInputData(pointPolyData)
       surf.SetNeighborhoodSize(20)
@@ -477,9 +511,9 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
       modelDisplayNode.SetOpacity(0.3) # Between 0-1, 1 being opaque
       slicer.mrmlScene.AddNode(modelDisplayNode)
       outputModel.SetAndObserveDisplayNodeID(modelDisplayNode.GetID())
-  
+
     outputModel.GetDisplayNode().SliceIntersectionVisibilityOn()
-      
+
     outputModel.Modified()
 
   def showInSliceViewers(self, volumeNode, sliceWidgetNames):
@@ -501,7 +535,7 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
         sliceLogic.GetSliceCompositeNode().SetForegroundVolumeID(backgroundVolumeNodeID)
       # show the new volume as background
       sliceLogic.GetSliceCompositeNode().SetBackgroundVolumeID(newVolumeNodeID)
-    
+
 class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
   """
   This is the test case for your scripted module.
@@ -543,17 +577,20 @@ class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
     inputMarkup.AddFiducial(-5,-60,-15)
     inputMarkup.AddFiducial(-5,5,60)
     inputMarkup.AddFiducial(-5,-35,-30)
-    
+
     # Create output volume
     outputVolume = slicer.vtkMRMLScalarVolumeNode()
     slicer.mrmlScene.AddNode(outputVolume)
-    
+
     # Clip volume
     logic = VolumeClipWithModelLogic()
-    clipOutsideSurface = True
-    fillValue = -5
+    ClipOutsideSurface = True
+    FillOutsideValue = 0
+    ClipInsideSurface = True
+    FillInsideValue = 255
+
     logic.updateModelFromMarkup(inputMarkup, clippingModel)
-    logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillValue, outputVolume)
+    logic.clipVolumeWithModel(inputVolume, clippingModel, ClipOutsideSurface, FillOutsideValue, outputVolume)
     logic.showInSliceViewers(outputVolume, ["Red", "Yellow", "Green"])
-    
+
     self.delayDisplay("Test passed!")
