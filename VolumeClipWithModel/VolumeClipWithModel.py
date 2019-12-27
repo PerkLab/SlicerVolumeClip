@@ -434,9 +434,8 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
 
     # Add a default display node to output volume node if it does not exist yet
     if not outputVolume.GetDisplayNode:
-      displayNode=slicer.vtkMRMLScalarVolumeDisplayNode()
+      displayNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeDisplayNode")
       displayNode.SetAndObserveColorNodeID("vtkMRMLColorTableNodeGrey")
-      slicer.mrmlScene.AddNode(displayNode)
       outputVolume.SetAndObserveDisplayNodeID(displayNode.GetID())
 
     return True
@@ -522,7 +521,7 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
 
     # Create default model display node if does not exist yet
     if not outputModel.GetDisplayNode():
-      modelDisplayNode = slicer.mrmlScene.CreateNodeByClass("vtkMRMLModelDisplayNode")
+      modelDisplayNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLModelDisplayNode")
       modelDisplayNode.SetColor(0,0,1) # Blue
       modelDisplayNode.BackfaceCullingOff()
       if slicer.app.majorVersion >= 5 or (slicer.app.majorVersion == 4 and slicer.app.minorVersion >= 11):
@@ -530,7 +529,6 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
       else:
         modelDisplayNode.SliceIntersectionVisibilityOn()
       modelDisplayNode.SetOpacity(0.3) # Between 0-1, 1 being opaque
-      slicer.mrmlScene.AddNode(modelDisplayNode)
       outputModel.SetAndObserveDisplayNodeID(modelDisplayNode.GetID())
 
     if slicer.app.majorVersion >= 5 or (slicer.app.majorVersion == 4 and slicer.app.minorVersion >= 11):
@@ -585,15 +583,12 @@ class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
     inputVolume = sampleDataLogic.downloadMRHead()
 
     # Create empty model node
-    clippingModel = slicer.vtkMRMLModelNode()
-    slicer.mrmlScene.AddNode(clippingModel)
+    clippingModel = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLModelNode")
 
     # Create markup fiducials
-    displayNode = slicer.vtkMRMLMarkupsDisplayNode()
-    slicer.mrmlScene.AddNode(displayNode)
-    inputMarkup = slicer.vtkMRMLMarkupsFiducialNode()
+    displayNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsDisplayNode")
+    inputMarkup = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsFiducialNode")
     inputMarkup.SetName('C')
-    slicer.mrmlScene.AddNode(inputMarkup)
     inputMarkup.SetAndObserveDisplayNodeID(displayNode.GetID())
     inputMarkup.AddFiducial(35,-10,-10)
     inputMarkup.AddFiducial(-15,20,-10)
@@ -603,8 +598,7 @@ class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
     inputMarkup.AddFiducial(-5,-35,-30)
 
     # Create output volume
-    outputVolume = slicer.vtkMRMLScalarVolumeNode()
-    slicer.mrmlScene.AddNode(outputVolume)
+    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
 
     # Clip volume
     logic = VolumeClipWithModelLogic()
