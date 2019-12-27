@@ -608,7 +608,7 @@ class VolumeClipWithModelTest(ScriptedLoadableModuleTest):
     fillInsideValue = 255
 
     logic.updateModelFromMarkup(inputMarkup, clippingModel)
-    logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillOutsideValue, outputVolume)
+    logic.clipVolumeWithModel(inputVolume, clippingModel, clipOutsideSurface, fillOutsideValue, clipInsideSurface, fillInsideValue, outputVolume)
     logic.showInSliceViewers(outputVolume, ["Red", "Yellow", "Green"])
 
     self.delayDisplay("Test passed!")
