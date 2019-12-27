@@ -525,12 +525,18 @@ class VolumeClipWithModelLogic(ScriptedLoadableModuleLogic):
       modelDisplayNode = slicer.mrmlScene.CreateNodeByClass("vtkMRMLModelDisplayNode")
       modelDisplayNode.SetColor(0,0,1) # Blue
       modelDisplayNode.BackfaceCullingOff()
-      modelDisplayNode.SliceIntersectionVisibilityOn()
+      if slicer.app.majorVersion >= 5 or (slicer.app.majorVersion == 4 and slicer.app.minorVersion >= 11):
+        modelDisplayNode.Visibility2DOn()
+      else:
+        modelDisplayNode.SliceIntersectionVisibilityOn()
       modelDisplayNode.SetOpacity(0.3) # Between 0-1, 1 being opaque
       slicer.mrmlScene.AddNode(modelDisplayNode)
       outputModel.SetAndObserveDisplayNodeID(modelDisplayNode.GetID())
 
-    outputModel.GetDisplayNode().SliceIntersectionVisibilityOn()
+    if slicer.app.majorVersion >= 5 or (slicer.app.majorVersion == 4 and slicer.app.minorVersion >= 11):
+      outputModel.GetDisplayNode().Visibility2DOn()
+    else:
+      outputModel.GetDisplayNode().SliceIntersectionVisibilityOn()
 
     outputModel.Modified()
 
